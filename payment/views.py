@@ -1,5 +1,4 @@
 from decimal import Decimal
-
 import stripe
 from django.conf import settings
 from django.shortcuts import get_object_or_404, redirect, render
@@ -12,6 +11,20 @@ stripe.api_version = settings.STRIPE_API_VERSION
 
 
 def payment_process(request):
+    """
+    Process the payment for the order using Stripe.
+
+    This view handles the payment process by creating a Stripe checkout session
+    for the order associated with the user. It redirects the user to the Stripe 
+    payment form upon successful creation of the session.
+
+    Args:
+        request (HttpRequest): The request object containing metadata about the request.
+
+    Returns:
+        HttpResponse: A redirect to the Stripe payment form or a rendered template 
+                       if the request method is not POST.
+    """
     order_id = request.session.get('order_id')
     order = get_object_or_404(Order, id=order_id)
 
@@ -31,7 +44,8 @@ def payment_process(request):
             'cancel_url': cancel_url,
             'line_items': [],
         }
-        # add order items to the Stripe checkout session
+
+        # Add order items to the Stripe checkout session
         for item in order.items.all():
             session_data['line_items'].append(
                 {
@@ -55,10 +69,10 @@ def payment_process(request):
             )
             session_data['discounts'] = [{'coupon': stripe_coupon.id}]
 
-        # create Stripe checkout session
+        # Create Stripe checkout session
         session = stripe.checkout.Session.create(**session_data)
 
-        # redirect to Stripe payment form
+        # Redirect to Stripe payment form
         return redirect(session.url, code=303)
 
     else:
@@ -66,8 +80,30 @@ def payment_process(request):
 
 
 def payment_completed(request):
+    """
+    Render the payment completed page.
+
+    This view displays a confirmation page after a successful payment.
+
+    Args:
+        request (HttpRequest): The request object containing metadata about the request.
+
+    Returns:
+        HttpResponse: A rendered template indicating that the payment was completed.
+    """
     return render(request, 'payment/completed.html')
 
 
 def payment_canceled(request):
+    """
+    Render the payment canceled page.
+
+    This view displays a page indicating that the payment process was canceled.
+
+    Args:
+        request (HttpRequest): The request object containing metadata about the request.
+
+    Returns:
+        HttpResponse: A rendered template indicating that the payment was canceled.
+    """
     return render(request, 'payment/canceled.html')
