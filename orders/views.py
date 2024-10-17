@@ -12,6 +12,24 @@ from .tasks import order_created
 
 
 def order_create(request):
+    """
+    Handle order creation and processing.
+
+    This view handles the process of creating an order based on the user's
+    cart and order form submission. If the form is valid, an order is created,
+    order items are saved, the cart is cleared, and an asynchronous task is
+    launched to send a confirmation email. The order is saved in the session,
+    and the user is redirected to the payment process.
+
+    Args:
+        request (HttpRequest): The HTTP request object containing user data
+            and the POST data from the order form.
+
+    Returns:
+        HttpResponse: If the form is submitted and valid, redirects to the 
+        payment process page. Otherwise, renders the order creation form
+        template.
+    """
     cart = Cart(request)
     if request.method == 'POST':
         form = OrderCreateForm(request.POST)
@@ -28,13 +46,9 @@ def order_create(request):
                     price=item['price'],
                     quantity=item['quantity'],
                 )
-            # clear the cart
             cart.clear()
-            # launch asynchronous task
             order_created.delay(order.id)
-            # set the order in the session
             request.session['order_id'] = order.id
-            # redirect for payment
             return redirect('payment:process')
     else:
         form = OrderCreateForm()
@@ -47,6 +61,20 @@ def order_create(request):
 
 @staff_member_required
 def admin_order_detail(request, order_id):
+    """
+    Display the details of a specific order in the admin panel.
+
+    This view is restricted to staff members and displays the details of
+    a given order, such as customer information, items bought, and order
+    total, using a template.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        order_id (int): The ID of the order to be retrieved and displayed.
+
+    Returns:
+        HttpResponse: Renders the admin order detail template.
+    """
     order = get_object_or_404(Order, id=order_id)
     return render(
         request, 'admin/orders/order/detail.html', {'order': order}
@@ -55,6 +83,21 @@ def admin_order_detail(request, order_id):
 
 @staff_member_required
 def admin_order_pdf(request, order_id):
+    """
+    Generate a PDF invoice for a specific order in the admin panel.
+
+    This view generates a PDF version of the invoice for the specified order,
+    restricted to staff members. It uses the WeasyPrint library to render
+    HTML to PDF.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        order_id (int): The ID of the order for which the PDF invoice is generated.
+
+    Returns:
+        HttpResponse: A response object containing the generated PDF, with
+        appropriate content type and headers for downloading the file.
+    """
     order = get_object_or_404(Order, id=order_id)
     html = render_to_string('orders/order/pdf.html', {'order': order})
     response = HttpResponse(content_type='application/pdf')

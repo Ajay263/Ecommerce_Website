@@ -1,32 +1,53 @@
 {% extends "shop/base.html" %}
 
+
 {% block title %}
+  <!-- Sets the title of the page to 'Checkout' -->
   Checkout
 {% endblock %}
 
 {% block content %}
+  <!-- Main content block displaying the checkout information -->
   <h1>Checkout</h1>
+
   <div class="order-info">
+    <!-- Section displaying the order summary -->
     <h3>Your order</h3>
+
+    <!-- List of items in the cart -->
     <ul>
+      <!-- Loop through each item in the cart -->
       {% for item in cart %}
         <li>
+          <!-- Display the quantity and product name -->
           {{ item.quantity }}x {{ item.product.name }}
+          <!-- Display the total price for each item -->
           <span>${{ item.total_price|floatformat:2 }}</span>
         </li>
       {% endfor %}
+
+      <!-- Check if a coupon is applied to the cart -->
       {% if cart.coupon %}
         <li>
+          <!-- Display the coupon code and the discount percentage -->
           "{{ cart.coupon.code }}" ({{ cart.coupon.discount }}% off)
+          <!-- Display the discount amount -->
           <span class="neg">- ${{ cart.get_discount|floatformat:2 }}</span>
         </li>
       {% endif %}
     </ul>
+
+    <!-- Display the total price after applying the discount (if any) -->
     <p>Total: ${{ cart.get_total_price_after_discount|floatformat:2 }}</p>
   </div>
+
+  <!-- Form to submit the order -->
   <form method="post" class="order-form">
+    <!-- Render the form fields as paragraphs -->
     {{ form.as_p }}
+    <!-- Submit button for placing the order -->
     <p><input type="submit" value="Place order"></p>
+    <!-- Include CSRF token for security -->
     {% csrf_token %}
   </form>
 {% endblock %}

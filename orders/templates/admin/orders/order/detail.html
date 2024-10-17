@@ -1,10 +1,13 @@
 {% extends "admin/base_site.html" %}
 
+
 {% block title %}
+  <!-- Sets the title block with the order ID -->
   Order {{ order.id }} {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
+  <!-- Creates a breadcrumb navigation for the order detail page -->
   <div class="breadcrumbs">
     <a href="{% url "admin:index" %}">Home</a> &rsaquo;
     <a href="{% url "admin:orders_order_changelist" %}">Orders</a>
@@ -15,44 +18,57 @@
 {% endblock %}
 
 {% block content %}
+<!-- Main content block displaying order details -->
+
 <div class="module">
+  <!-- Order summary section -->
   <h1>Order {{ order.id }}</h1>
   <ul class="object-tools">
     <li>
+      <!-- Print the order when clicked -->
       <a href="#" onclick="window.print();">
         Print order
       </a>
     </li>
   </ul>
+  
+  <!-- Order details table -->
   <table>
     <tr>
+      <!-- Display order creation date -->
       <th>Created</th>
       <td>{{ order.created }}</td>
     </tr>
     <tr>
+      <!-- Display customer full name -->
       <th>Customer</th>
       <td>{{ order.first_name }} {{ order.last_name }}</td>
     </tr>
     <tr>
+      <!-- Display customer email with mailto link -->
       <th>E-mail</th>
       <td><a href="mailto:{{ order.email }}">{{ order.email }}</a></td>
     </tr>
     <tr>
+      <!-- Display customer address -->
       <th>Address</th>
-    <td>
-      {{ order.address }},
-      {{ order.postal_code }} {{ order.city }}
-    </td>
+      <td>
+        {{ order.address }},
+        {{ order.postal_code }} {{ order.city }}
+      </td>
     </tr>
     <tr>
+      <!-- Display total order cost -->
       <th>Total amount</th>
       <td>${{ order.get_total_cost }}</td>
     </tr>
     <tr>
+      <!-- Display order payment status -->
       <th>Status</th>
       <td>{% if order.paid %}Paid{% else %}Pending payment{% endif %}</td>
     </tr>
     <tr>
+      <!-- Display Stripe payment ID with link if available -->
       <th>Stripe payment</th>
       <td>
         {% if order.stripe_id %}
@@ -64,10 +80,15 @@
     </tr>
   </table>
 </div>
+
 <div class="module">
+  <!-- Section for displaying items purchased -->
   <h2>Items bought</h2>
+  
+  <!-- Table of items in the order -->
   <table style="width:100%">
     <thead>
+      <!-- Table headers for products, price, quantity, and total -->
       <tr>
         <th>Product</th>
         <th>Price</th>
@@ -76,8 +97,10 @@
       </tr>
     </thead>
     <tbody>
+      <!-- Loop through each item in the order -->
       {% for item in order.items.all %}
         <tr class="row{% cycle "1" "2" %}">
+          <!-- Display product name, price, quantity, and total cost -->
           <td>{{ item.product.name }}</td>
           <td class="num">${{ item.price }}</td>
           <td class="num">{{ item.quantity }}</td>
@@ -85,14 +108,17 @@
         </tr>
       {% endfor %}
 
+      <!-- Check if the order has a coupon applied -->
       {% if order.coupon %}
         <tr class="subtotal">
+          <!-- Display subtotal before discount -->
           <td colspan="3">Subtotal</td>
           <td class="num">
             ${{ order.get_total_cost_before_discount|floatformat:2 }}
           </td>
         </tr>
         <tr>
+          <!-- Display coupon code and discount applied -->
           <td colspan="3">
             "{{ order.coupon.code }}" coupon
             ({{ order.discount }}% off)
@@ -103,6 +129,7 @@
         </tr>
       {% endif %}
       <tr class="total">
+        <!-- Display final total after discount (if any) -->
         <td colspan="3">Total</td>
         <td class="num">
           ${{ order.get_total_cost|floatformat:2 }}
@@ -111,4 +138,5 @@
     </tbody>
   </table>
 </div>
+
 {% endblock %}
